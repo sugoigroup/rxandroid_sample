@@ -3,7 +3,10 @@ package com.sugoijapaneseschool.rxandroidexample;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.TextView;
+
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
@@ -17,47 +20,40 @@ import io.reactivex.schedulers.Schedulers;
 public class MainActivity extends AppCompatActivity {
 
     private Disposable mDisposable;
+    TextView helloTv;
+    TextView helloTv2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        TextView helloTv = (TextView) findViewById(R.id.hello);
+        helloTv = (TextView) findViewById(R.id.hello);
+        helloTv2 = (TextView) findViewById(R.id.hello2);
+        Button btn = (Button) findViewById(R.id.button);
+        btn.setOnClickListener(e -> btnBlicked());
+    }
 
-//        이 부분은 지금은 간단하게 람다형식을 처리할거임. s -> helloTv.setText(s)
-//        Observer<String> observable=new DisposableObserver<String>(){
-//            @Override
-//            public void onNext(String s) {
-//                helloTv.setText(s);
-//            }
-//
-//            @Override
-//            public void onError(Throwable e) { }
-//            @Override
-//            public void onComplete() { }
-//        };
+    private void btnBlicked() {
 
-        //create 는 아이템을 바로바로 서브스크들한테 방출한다.
-        Observable.create((ObservableOnSubscribe<String>) emitter -> {
-            emitter.onNext(getJest());
-            emitter.onComplete();
-        })
-                .subscribeOn(Schedulers.io()) //스케쥴러로 몰래 뒤에서 실행시키고
+        //timer 를 이용하면 앞서 했던 thread 를 안써도 일정시간 지난후 구독이 이루어지게 할수 있다..
+        Observable.timer(3, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())  //결과는 화면 메인쓰레드에서 하자.
-                .subscribe(s -> helloTv.setText(s));
+                .subscribe(d -> {
+                    changeText(getJest());
+                });
 
 
         //just 는 아이템을 바로바로 서브스크들한테 방출한다.
-        Observable.just("Hello ! from just").subscribe(s -> helloTv.setText(s));
+        Observable.just("Hello ! from just").subscribe(s -> changeText(s));
+    }
+
+    private void changeText(String txt) {
+        helloTv.setText(txt);
+        helloTv2.setText(txt);
     }
 
     private String getJest() {
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         return "Hello! from create";
     }
 
